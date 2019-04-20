@@ -134,18 +134,7 @@ function Generate-UID ($firstname, $lastname) {
     return $uid;
 }
 
-function Create-Account($item) {
-    $domain = $item["Accountart_x003a_domain"].LookupValue
-    $display_name_pattern = $item["Accountart_x003a_Anzeigename"].LookupValue
-
-    $firstname = $item["Vorname"]
-    $lastname = $item["Nachname"]
-    $private_mail = $item["email"]
-
-    $uid = Generate-UID $firstname $lastname
-    $mail = "$uid@$domain"
-    $display_name = $display_name_pattern -replace "%Vorname%",$firstname -replace "%Nachname%",$lastname
-
+function Create-Account($firstname, $lastname, $display_name, $uid, $mail, $private_mail) {
     $PasswordProfile = New-Object -TypeName Microsoft.Open.AzureAD.Model.PasswordProfile
     $PasswordProfile.ForceChangePasswordNextLogin = $true
     $PasswordProfile.Password = Generate-Password
@@ -166,10 +155,7 @@ function Create-Account($item) {
         Write-Warning "failed to assign license"
     }
 
-    return @{
-        user = $user
-        password = $PasswordProfile.Password
-    }
+    return $true
 }
 
 function Send-WelcomeMail($firstname, $lastname, $private_mail, $mail, $password) {
@@ -211,7 +197,7 @@ do {
     $items | ForEach-Object {
         $item = $_
         $row = @{}
-        "ID","Vorname","Nachname","email","Accountart","Gruppen","Verschwiegenheitserklaerung" | ForEach-Object {
+        "ID","Vorname","Nachname","email","Accountart","Gruppen","Freigabe" | ForEach-Object {
             $value = $item[$_]
             if ($value -and $value.LookupId) {
                 $value = $value.LookupValue
@@ -219,7 +205,7 @@ do {
             $row[$_] = $value
         }
         [psCustomObject]$row
-    } | ft -AutoSize "ID","Vorname","Nachname","email","Accountart","Gruppen","Verschwiegenheitserklaerung"
+    } | ft -AutoSize "ID","Vorname","Nachname","email","Accountart","Gruppen","Freigabe"
 
     $selected = Read-Host -Prompt "Account ID wählen (beenden mit 'q')"
     if ($selected -eq "q") {
@@ -234,21 +220,73 @@ do {
         continue
     }
 
-    Write-Host -ForegroundColor Green "Erfolg"
+
+    $domain = $item["Accountart_x003a_domain"].LookupValue
+    $display_name_pattern = $item["Accountart_x003a_Anzeigename"].LookupValue
+
+    $firstname = $item["Vorname"]
+    $lastname = $item["Nachname"]
+    $private_mail = $item["email"]
+
+    $uid = Generate-UID $firstname $lastname
+    $mail = "$uid@$domain"
+    $display_name = $display_name_pattern -replace "%Vorname%",$firstname -replace "%Nachname%",$lastname
+
+
+    $action = Read-Value "Neuen Account erstellen für $($display_name)? [y/N]" "n"
+    if ($action -eq "y") {
+        $success = Create-Account $firstname $lastname $display_name $uid $mail $private_mail
+        if (!$success) {
+            Write-Warning "Fehler beim Erstellen des User"
+            Read-Host -Prompt "Enter drücken"
+            continue
+        }
+
+        Write-Host -ForegroundColor Green "Erfolg"
+    }
+
+    $user = Get-AzureADUser -ObjectId $mail
+    if (!$? -or !$user) {
+        Write-Warning "User konnte nicht gefunden werden!"
+        continue
+    }
+
     if ($item["Gruppen_x003a_ObjectID"]) {
-        $item["Gruppen_x003a_ObjectID"].LookupValue | ForEach-Object {
-            Get-AzureADGroup -ObjectId $_
+        $action = Read-Value "Zu Gruppen hinzufügen? [y/N]" "n"
+        if ($action -eq "y") {
+            Write-Host "Füge zu Gruppen hinzu:"
+            $item["Gruppen_x003a_ObjectID"].LookupValue | ForEach-Object {
+                $group = Get-AzureADGroup -ObjectId $_
+                Write-Host $group.DisplayName
+
+                if ($group.MailEnabled) {
+                    Add-DistributionGroupMember -Identity $group.Mail -Member $user.UserPrincipalName
+                } else {
+                    Add-AzureADGroupMember -ObjectId $group.ObjectId -RefObjectId $user.ObjectId
+                }
+
+                if (!$?) {
+                    Write-Warning "Fehler beim Hinzufügen zu $($group.DisplayName)"
+                }
+            }
         }
     }
 
-    if ($domains[$choice]) {
-        $account = Create-AccountFor $domains[$choice]
 
-        if ($account) {
-            $send_mail = Read-Value "Welcome-Mail senden? [Ja/nein]" "ja"
-            if ($send_mail -iin "j","ja","y","yes") {
-                Send-WelcomeMail $account.user.GivenName $account.user.Surname $account.user.OtherMails[0] $account.user.UserPrincipalName $account.password
-            }
-        }
+    $action = Read-Value "Welcome-Mail versenden? [y/N]" "n"
+    if ($action -eq "y") {
+        $password = Generate-Password
+        Set-AzureADUserPassword -ObjectId $user.ObjectId -Password (ConvertTo-SecureString -AsPlainText -Force $password) -ForceChangePasswordNextLogin $true
+
+        Write-Host "Sende Welcome-Mail"
+        Send-WelcomeMail $user.GivenName $user.Surname $item["email"] $user.UserPrincipalName $password
+    }
+
+
+    $action = Read-Value "Als erledigt abhaken? [y/N]" "n"
+    if ($action -eq "y") {
+        $item["erledigt"] = $true
+        $item.Update()
+        $context.ExecuteQuery()
     }
 } while ($choice -ne "q")

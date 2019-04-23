@@ -260,7 +260,7 @@ do {
                 Write-Host $group.DisplayName
 
                 if ($group.MailEnabled) {
-                    Add-DistributionGroupMember -Identity $group.Mail -Member $user.UserPrincipalName
+                    Add-DistributionGroupMember -Identity $group.Mail -Member $user.UserPrincipalName -BypassSecurityGroupManagerCheck
                 } else {
                     Add-AzureADGroupMember -ObjectId $group.ObjectId -RefObjectId $user.ObjectId
                 }

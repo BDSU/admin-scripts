@@ -13,6 +13,7 @@
  # Für jede JE muss eine HashTable zu $configs hinzugefügt werden mit folgenden Keys:
  #     - name: Anzeigename der JE, wird auch dem Anzeigenamen des Benutzers hinzugefügt
  #     - tenantId: GUID des Office365-Tenants der JE
+ #     - group (optional): falls vorhanden: füge alle User dieser JE zu dieser JE-spezifischen Gruppe im BDSU-Tenant hinzu
  #     - groups: HashTable mit allen Gruppen, deren Mitglieder übernommen werden sollen
  #         - key ist der Name der Gruppe (wird nicht verwendet, dient nur der Lesbarkeit der Konfiguration
  #         - value ist die Object ID der Gruppe
@@ -29,6 +30,7 @@ $configs = @(
     @{
         name = "JE Name"
         tenantId = "12345678-abcd-abcd-abcd-1234567890ab"
+        group = "12345678-abcd-abcd-abcd-1234567890ab"
         groups = @{
             "Mitglieder" = "12345678-abcd-abcd-abcd-1234567890ab"
         }
@@ -53,6 +55,10 @@ $configs | ForEach-Object {
 
     $guests = Get-AzureADGroupMember -ObjectId $guestsGroupId -All $true | select -ExpandProperty ObjectId
 
+    if ($config.group) {
+        $guest_group_members = Get-AzureADGroupMember -ObjectId $config.group -All $true | select -ExpandProperty ObjectId
+    }
+
     $members | ForEach-Object {
         $member = $_
         $result = New-AzureADMSInvitation -InvitedUserEmailAddress $member.Mail -InvitedUserDisplayName $member.DisplayName -SendInvitationMessage $false -InvitedUserType guest -InviteRedirectUrl https://bdsuev.sharepoint.com
@@ -60,6 +66,9 @@ $configs | ForEach-Object {
             Set-AzureADUser -ObjectId $result.InvitedUser.Id -Department $member.Department -DisplayName "$($member.DisplayName) | $($config.name)" -GivenName $member.GivenName -JobTitle $member.JobTitle -Surname $member.Surname -ShowInAddressList $true -UserType guest
             if ($result.InvitedUser.Id -notin $guests) {
                 Add-AzureADGroupMember -ObjectId $guestsGroupId -RefObjectId $result.InvitedUser.Id
+            }
+            if ($config.group -and $result.InvitedUser.Id -notin $guest_group_members) {
+                Add-AzureADGroupMember -ObjectId $config.group -RefObjectId $result.InvitedUser.Id
             }
         }
         $result

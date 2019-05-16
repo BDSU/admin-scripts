@@ -49,7 +49,7 @@ $configs | ForEach-Object {
         Get-AzureADGroupMember -ObjectId $_
     } | Where-Object {
         $_.ObjectType -eq "User"
-    } | Sort-Object -Unique DisplayName
+    } | Sort-Object -Unique | Sort-Object DisplayName
 
     Connect-AzureAD -TenantId $bdsuTenantId -Credential $credentials
 

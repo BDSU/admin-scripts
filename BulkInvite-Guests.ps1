@@ -46,7 +46,7 @@ $configs | ForEach-Object {
     Connect-AzureAD -TenantId $config.tenantId -Credential $credentials
 
     $members = $config.groups.Values | ForEach-Object {
-        Get-AzureADGroupMember -ObjectId $_
+        Get-AzureADGroupMember -All $true -ObjectId $_
     } | Where-Object {
         $_.ObjectType -eq "User"
     } | Sort-Object -Unique | Sort-Object DisplayName

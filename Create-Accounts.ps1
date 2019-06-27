@@ -224,9 +224,9 @@ do {
     $domain = $item["Accountart_x003a_domain"].LookupValue
     $display_name_pattern = $item["Accountart_x003a_Anzeigename"].LookupValue
 
-    $firstname = $item["Vorname"]
-    $lastname = $item["Nachname"]
-    $private_mail = $item["email"]
+    $firstname = $item["Vorname"].Trim()
+    $lastname = $item["Nachname"].Trim()
+    $private_mail = $item["email"].Trim()
 
     $uid = Generate-UID $firstname $lastname
     $mail = "$uid@$domain"

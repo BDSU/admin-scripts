@@ -1,4 +1,16 @@
-﻿<###
+﻿param(
+    [string]$DIR
+)
+
+if (!$DIR) {
+    $DIR = [string](Get-Location)
+}
+
+if ($DIR -match '.+?\\$') {
+    $DIR = $DIR.Substring(0, $DIR.Length-1)
+}
+
+<###
  #
  # Skript zum Hinzufügen aller Mitglieder einer Gruppe im eigenen Tenant
  # als Gast zum O365-Tenant des BDSU
@@ -10,6 +22,7 @@
  # Konfiguration:
  # - $bdsuTenantId: GUID des Office365-Tenants des BDSU
  # - $guestGroupId: Object ID der Gruppe, zu der alle Gastbenutzer hinzugefügt werden sollen (für Berechtigungen)
+ # - $username: Benutzername des Users mit Admin-Rechten im BDSU-Tenant und Gastzugriff in den JE-Tenants
  # Für jede JE muss eine HashTable zu $configs hinzugefügt werden mit folgenden Keys:
  #     - name: Anzeigename der JE, wird auch dem Anzeigenamen des Benutzers hinzugefügt
  #     - tenantId: GUID des Office365-Tenants der JE
@@ -37,12 +50,19 @@ $configs = @(
     }
 )
 
-$credentials = Get-Credential -Message "Admin in main tenant"
+Write-Output "Starting:  $((Get-Date).tostring("yyyy-MM-dd_hh-mm"))"
+
+$username = "admin@example.org"
+
+$secPasswordText = Get-Content "$DIR\password.txt"
+$secPassword = $secPasswordText | ConvertTo-SecureString
+
+$credentials = New-Object System.Management.Automation.PSCredential($username, $secPassword)
 
 $configs | ForEach-Object {
     $config = $_
 
-    Write-Host -ForegroundColor Green "Inviting users for $($config.name)"
+    Write-Output "Inviting users for $($config.name)"
     Connect-AzureAD -TenantId $config.tenantId -Credential $credentials
 
     $members = $config.groups.Values | ForEach-Object {

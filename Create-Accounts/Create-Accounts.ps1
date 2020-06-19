@@ -158,6 +158,25 @@ function Create-Account($firstname, $lastname, $display_name, $uid, $mail, $priv
     return $true
 }
 
+function Get-GroupType($groupId) {
+    $group = Get-UnifiedGroup -Identity $groupId -ErrorAction SilentlyContinue
+    if ($group) {
+        return "Office365"
+    }
+
+    $group = Get-DistributionGroup -Identity $groupId -ErrorAction SilentlyContinue
+    if ($group) {
+        return "Distribution"
+    }
+
+    $group = Get-AzureADGroup -ObjectId $groupId -ErrorAction SilentlyContinue
+    if ($group -and $group.SecurityEnabled -and !$group.MailEnabled) {
+        return "Security"
+    }
+
+    throw "Failed to detect group type '$groupId'"
+}
+
 function Send-WelcomeMail($firstname, $lastname, $private_mail, $mail, $password) {
     $body = @"
         Hallo $firstname,<br />
@@ -258,15 +277,17 @@ do {
             $item["Gruppen_x003a_ObjectID"].LookupValue | ForEach-Object {
                 $group = Get-AzureADGroup -ObjectId $_
                 Write-Host $group.DisplayName
-
-                if ($group.MailEnabled) {
-                    Add-DistributionGroupMember -Identity $group.Mail -Member $user.UserPrincipalName -BypassSecurityGroupManagerCheck
-                } else {
-                    Add-AzureADGroupMember -ObjectId $group.ObjectId -RefObjectId $user.ObjectId
-                }
-
-                if (!$?) {
-                    Write-Warning "Fehler beim Hinzufügen zu $($group.DisplayName)"
+                $groupType = Get-GroupType $group.ObjectId
+                switch ($groupType){
+                    "Office365" {
+                        Add-UnifiedGroupLinks -Identity $group.ObjectId -LinkType member -Links $mail
+                    }
+                    "Distribution" {
+                        Add-DistributionGroupMember -Identity $group.Mail -Member $user.UserPrincipalName -BypassSecurityGroupManagerCheck
+                    }
+                    "Security" {
+                        Add-AzureADGroupMember -ObjectId $group.ObjectId -RefObjectId $user.ObjectId
+                    }
                 }
             }
         }

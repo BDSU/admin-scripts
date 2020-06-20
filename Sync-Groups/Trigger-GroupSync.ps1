@@ -35,6 +35,10 @@ $file_script = $DIR + "\Sync-Groups.ps1"
 $file_stdout = $LOG_DIR + $LOG_NAME
 $file_stderr = $LOG_DIR + $ERR_NAME
 
+$file_script2 = $DIR + "\Sync-Groups-Admins.ps1"
+
+
 "Starting:  $((Get-Date).tostring("yyyy-MM-dd_HH-mm"))" > $file_stdout
 powershell -File $file_script -DIR $DIR *>> $file_stdout
+powershell -File $file_script2 -DIR $DIR *>> $file_stdout
 "Finished:  $((Get-Date).tostring("yyyy-MM-dd_HH-mm"))" >> $file_stdout

@@ -52,12 +52,18 @@ $configs = @(
 
 Write-Output "Starting:  $((Get-Date).tostring("yyyy-MM-dd_hh-mm"))"
 
-$username = "admin@example.org"
+if (Test-Path -Path "$DIR\password.txt") {
+    $username = "admin@example.org"
 
-$secPasswordText = Get-Content "$DIR\password.txt"
-$secPassword = $secPasswordText | ConvertTo-SecureString
+    $secPasswordText = Get-Content "$DIR\password.txt"
+    $secPassword = $secPasswordText | ConvertTo-SecureString
 
-$credentials = New-Object System.Management.Automation.PSCredential($username, $secPassword)
+    $credentials = New-Object System.Management.Automation.PSCredential ($username, $secPassword)
+}
+
+if (!$credentials) {
+    $credentials = Get-Credential
+}
 
 $configs | ForEach-Object {
     $config = $_

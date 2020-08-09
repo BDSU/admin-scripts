@@ -6,6 +6,8 @@ hinzuzufügen.
 Das Hinzufügen als Gastbenutzer ermöglicht den JE-Mitgliedern direkt mit ihrem
 Office365-Account auf Ressourcen im BDSU-Tenant zuzugreifen.
 
+Der Guide zur gesamten Integration ist [hier](integrationsguide.md) zu finden.
+
 ## Funktionsweise
 Zuerst muss im JE-Tenant ein Benutzer aus dem BDSU-Tenant als Gastbenutzer
 eingeladen werden. Dieser kann sich dann per `Connect-AzureAD` und der Tenant-ID

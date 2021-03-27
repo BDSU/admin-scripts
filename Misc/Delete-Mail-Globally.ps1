@@ -1,3 +1,8 @@
+# Präventiv Direktausführung unterbinden
+Write-Host -ForegroundColor red "Skript nicht als Gesamtes ausführen, sondern Kommentare lesen und in PowerShell ISE schrittweise durchgehen"
+Read-Host "Enter zum Beenden"
+exit
+
 <#################################################################################################################
 
 Skript zum Entfernen bestimmter Mails aus sämtlichen Exchange Online Postfächern
@@ -51,10 +56,14 @@ Out-File -FilePath "./phishing.log"
 
 <#################################################################################################################
 ACHTUNG!
-Die nächste Zeile leitet das Löschen der Mails ein. Es ist dringend empfohlen, vorher die Ergebnisse durchzusehen
+Die übernächste Zeile leitet das Löschen der Mails ein. Es ist dringend empfohlen, vorher die Ergebnisse durchzusehen
 und ggf. die Anfrage zu korrieren. Hierzu wäre notwendig, die Variable $searchName anzupassen (s.o.), da diese 
 eindeutig sein muss und bereits verwendet wurde.
+
+Um unvorsichtiges Löschen zu unterbinden, steht folgt erst ein "exit", welches bei Ausführung das Skript abbricht.
+Bei schrittweiser Ausführung muss es übersprungen werden.
 #################################################################################################################>
+exit
 New-ComplianceSearchAction -SearchName $searchName -Purge -PurgeType SoftDelete
 
 # Überpruefe Status

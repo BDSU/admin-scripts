@@ -69,18 +69,19 @@ foreach ($group in $_.Value) {
   
 #====Aktuelle als Moderatoren berechtigt
 $aktuelleBesitzerZwischenspeicher = Get-DistributionGroupMember -Identity $alleGruppen[$group]  
-$aktuelleBesitzer.Add($aktuelleBesitzerZwischenspeicher)
+$aktuelleBesitzer.Add($aktuelleBesitzerZwischenspeicher) | out-null
   
 }
 
 #===Berechtigte zur moderierenden Gruppe als Moderatoren hinzufügen
-  Set-DistributionGroup $zubesetzendeGruppeID -ManagedBy $aktuelleBesitzer.PrimarySmtpAddress
+  Set-DistributionGroup $zubesetzendeGruppeID -ManagedBy $aktuelleBesitzer.PrimarySmtpAddress -BypassSecurityGroupManagerCheck
   
   Write-Host "Aus der Gruppe " $group " wurden alle zu Besitzern von " $zubesetzendeGruppe 
 
 #===Ausgabe neuer Moderatoren
 $neueBesitzer = Get-DistributionGroup -Identity $zubesetzendeGruppeID 
-Write-Host "Aktuelle Besitzer für " $zubesetzendeGruppe ": " $neueBesitzer.ManagedBy
+Write-Host "Aktuelle Besitzer für " $zubesetzendeGruppe ": " 
+$neueBesitzer.ManagedBy | ft
 }
 
 
@@ -99,16 +100,17 @@ foreach ($group in $_.Value) {
   
 #====Aktuelle als Moderatoren berechtigt
 $aktuelleModeratorenZwischenspeicher = Get-DistributionGroupMember -Identity $alleGruppen[$group]  
-$aktuelleModeratoren.Add($aktuelleModeratorenZwischenspeicher)
+$aktuelleModeratoren.Add($aktuelleModeratorenZwischenspeicher) | out-null
 
   
 }
 
 #===Berechtigte zur moderierenden Gruppe als Moderatoren hinzufügen
-  Set-DistributionGroup  $zuModerierendeGruppeID -ModerationEnabled $true -ModeratedBy  $aktuelleModeratoren.PrimarySmtpAddress
+  Set-DistributionGroup  $zuModerierendeGruppeID -ModerationEnabled $true -ModeratedBy  $aktuelleModeratoren.PrimarySmtpAddress -BypassSecurityGroupManagerCheck
   Write-Host "Aus der Gruppe " $group " wurden alle zu Moderatoren von " $zuModerierendeGruppe 
 
 #===Ausgabe neuer Moderatoren
 $neueModeratoren = Get-DistributionGroup -Identity $zuModerierendeGruppeID
-Write-Host "Aktuelle Moderatoren für " $zuModerierendeGruppe ": " $neueModeratoren.ModeratedBy 
+Write-Host "Aktuelle Moderatoren für " $zuModerierendeGruppe ": " 
+$neueModeratoren.ModeratedBy | ft
 }

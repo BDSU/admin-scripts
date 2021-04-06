@@ -32,85 +32,73 @@ if (!$?) {
 
 
 
-#=====Alle Gruppen initalisieren
+# Alle Gruppen initalisieren
 $alleGruppen = @{
-    #Alle Gruppen + Verteiler werden mit ihrer Object-ID initalisiert:
-
-    #"Gruppe1" = "Object-ID"
-    #"Verteiler1Gruppe1" = "Object-ID"
+    # Alle Gruppen + Verteiler werden mit ihrer Object-ID initalisiert:
+    # "Gruppe1" = "Object-ID"
+    # "Verteiler1Gruppe1" = "Object-ID"
 }
  
-#=====Moderatoren zum Verteiler zuordnen: Verteiler = Moderatoren
+# Moderatoren zum Verteiler zuordnen: Verteiler = Moderatoren
 $groupMatchingModeration = @{
-#Zum Beispiel:
-
-#"Verteiler1Gruppe1" = "Gruppe1"
-
+    # Zum Beispiel:
+    # "Verteiler1Gruppe1" = "Gruppe1"
 }
 
-#=====Besitzer zum Verteiler zuordnen: Verteiler = Besitzer
+# Besitzer zum Verteiler zuordnen: Verteiler = Besitzer
 $groupMatchingBesitzer = @{
-#Zum Beispiel:
-
-#"Verteiler1Gruppe1" = "Gruppe1"
+    # Zum Beispiel:
+    # "Verteiler1Gruppe1" = "Gruppe1"
 }
 
 
-#======Gruppenbesitzer ernennen
+# Gruppenbesitzer ernennen
 $groupMatchingBesitzer.GetEnumerator() | ForEach-Object{
 
-#====zu besetzende Gruppe initalisieren
-$zubesetzendeGruppe = $_.name
-$zubesetzendeGruppeID = $alleGruppen[$zubesetzendeGruppe]
+    # Zu besetzende Gruppe initalisieren
+    $zubesetzendeGruppe = $_.name
+    $zubesetzendeGruppeID = $alleGruppen[$zubesetzendeGruppe]
 
-$aktuelleBesitzer = New-Object System.Collections.ArrayList
+    $aktuelleBesitzer = New-Object System.Collections.ArrayList
 
-foreach ($group in $_.Value) {
-  
-#====Aktuelle als Moderatoren berechtigt
-$aktuelleBesitzerZwischenspeicher = Get-DistributionGroupMember -Identity $alleGruppen[$group]  
-$aktuelleBesitzer.Add($aktuelleBesitzerZwischenspeicher) | out-null
-  
-}
+    foreach ($group in $_.Value) {
+        # Aktuelle als Besitzer berechtigt
+        $aktuelleBesitzerZwischenspeicher = Get-DistributionGroupMember -Identity $alleGruppen[$group]  
+        $aktuelleBesitzer.Add($aktuelleBesitzerZwischenspeicher) | out-null
+    }
 
-#===Berechtigte zur moderierenden Gruppe als Moderatoren hinzufügen
-  Set-DistributionGroup $zubesetzendeGruppeID -ManagedBy $aktuelleBesitzer.PrimarySmtpAddress -BypassSecurityGroupManagerCheck
-  
-  Write-Host "Aus der Gruppe " $group " wurden alle zu Besitzern von " $zubesetzendeGruppe 
-
-#===Ausgabe neuer Moderatoren
-$neueBesitzer = Get-DistributionGroup -Identity $zubesetzendeGruppeID 
-Write-Host "Aktuelle Besitzer für " $zubesetzendeGruppe ": " 
-$neueBesitzer.ManagedBy | ft
+    # Berechtigte als Gruppenbesitzer festlegen
+    Set-DistributionGroup $zubesetzendeGruppeID -ManagedBy $aktuelleBesitzer.PrimarySmtpAddress -BypassSecurityGroupManagerCheck
+    Write-Host "Aus der Gruppe " $group " wurden alle zu Besitzern von " $zubesetzendeGruppe 
+    
+    # Ausgabe aktueller/ neuer Besitzer
+    Write-Host "Aktuelle Besitzer für " $zubesetzendeGruppe ": "
+    $neueBesitzer = Get-DistributionGroup -Identity $zubesetzendeGruppeID 
+    $neueBesitzer.ManagedBy | ft
 }
 
 
-
-
-#====Funktion Moderatoren
+# Gruppenmoderatoren ernennen
 $groupMatchingModeration.GetEnumerator() | ForEach-Object{
 
-#====Zu moderierende Gruppen initalisieren
-$zuModerierendeGruppe = $_.name
-$zuModerierendeGruppeID = $alleGruppen[$zuModerierendeGruppe]
+    # Zu moderierende Gruppen initalisieren
+    $zuModerierendeGruppe = $_.name
+    $zuModerierendeGruppeID = $alleGruppen[$zuModerierendeGruppe]
 
-$aktuelleModeratoren = New-Object System.Collections.ArrayList
+    $aktuelleModeratoren = New-Object System.Collections.ArrayList
 
-foreach ($group in $_.Value) {
-  
-#====Aktuelle als Moderatoren berechtigt
-$aktuelleModeratorenZwischenspeicher = Get-DistributionGroupMember -Identity $alleGruppen[$group]  
-$aktuelleModeratoren.Add($aktuelleModeratorenZwischenspeicher) | out-null
+    foreach ($group in $_.Value) {
+        # Aktuelle als Moderatoren berechtigt
+        $aktuelleModeratorenZwischenspeicher = Get-DistributionGroupMember -Identity $alleGruppen[$group]  
+        $aktuelleModeratoren.Add($aktuelleModeratorenZwischenspeicher) | out-null
+    }
 
-  
-}
+    # Berechtigte zur moderierenden Gruppe als Moderatoren hinzufügen
+    Set-DistributionGroup  $zuModerierendeGruppeID -ModerationEnabled $true -ModeratedBy  $aktuelleModeratoren.PrimarySmtpAddress -BypassSecurityGroupManagerCheck
+    Write-Host "Aus der Gruppe " $group " wurden alle zu Moderatoren von " $zuModerierendeGruppe 
 
-#===Berechtigte zur moderierenden Gruppe als Moderatoren hinzufügen
-  Set-DistributionGroup  $zuModerierendeGruppeID -ModerationEnabled $true -ModeratedBy  $aktuelleModeratoren.PrimarySmtpAddress -BypassSecurityGroupManagerCheck
-  Write-Host "Aus der Gruppe " $group " wurden alle zu Moderatoren von " $zuModerierendeGruppe 
-
-#===Ausgabe neuer Moderatoren
-$neueModeratoren = Get-DistributionGroup -Identity $zuModerierendeGruppeID
-Write-Host "Aktuelle Moderatoren für " $zuModerierendeGruppe ": " 
-$neueModeratoren.ModeratedBy | ft
+    # Ausgabe aktueller/ neuer Moderatoren
+    Write-Host "Aktuelle Moderatoren für " $zuModerierendeGruppe ": " 
+    $neueModeratoren = Get-DistributionGroup -Identity $zuModerierendeGruppeID
+    $neueModeratoren.ModeratedBy | ft
 }

@@ -1,0 +1,2 @@
+### [Create-TreffenGruppe.ps1](Create-TreffenGruppe.ps1)
+Skript, um die neuen Treffenausrichter Sicherheitsgruppen anzulegen, der Hauptgruppe hinzuzufügen und in der SharePoint Liste für die Gruppenerstellung verfügbar zu machen.

@@ -12,6 +12,15 @@ ermöglicht das automatische Sicherstellen, dass in bestimmten (Teams-)Gruppen
 ausschließlich interne Accounts zugelassen sind.
 Dadurch werden unsere internen IT-Policies technisch erzwungen.
 
+## Zusätzliche Abhängigkeit
+Um dieses Skript ausführen zu können, muss erst eine weitere Abhängigkeit
+durch einen entsprechenden PowerShell-Befehl installiert werden.
+
+### [Microsoft Teams Module](https://docs.microsoft.com/de-de/microsoftteams/teams-powershell-overview)
+```pwsh
+Install-Module MicrosoftTeams
+```
+
 ## Konfiguration
 Das Skript wird über zwei Variablen am Anfang konfiguriert:
 - `$syncMapping`: konfiguriert von welchen Gruppen die Mitglieder in eine Gruppe

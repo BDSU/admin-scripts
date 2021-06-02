@@ -60,6 +60,7 @@ if (!$credentials) {
 }
 
 Connect-AzureAD -Credential $credentials | Out-Null
+Connect-MicrosoftTeams -Credential $credentials |Out-Null
 
 # remove existing Exchange Remote Sessions if any
 Get-PSSession | Where-Object {$_.ComputerName -eq "outlook.office365.com"} | Remove-PSSession
@@ -162,11 +163,8 @@ function Get-GroupMembers($groupName) {
             }
         }
         "Office365" {
-            # although group owners are always also members of the group they
-            # are not always included in Get-UnifiedGroupLinks -LinkType Members ...
-            [array]$members = Get-UnifiedGroupLinks -Identity $groupIds[$groupName] -LinkType Members
-            [array]$members += Get-UnifiedGroupLinks -Identity $groupIds[$groupName] -LinkType Owners
-            return $members.ExternalDirectoryObjectId | sort -Unique | ForEach-Object {
+            [array]$members = Get-TeamUser -GroupId $groupIds[$groupName]
+            return $members.UserId | sort -Unique | ForEach-Object {
                 Get-AzureADUser -ObjectId $_
             }
         }
@@ -193,7 +191,7 @@ function Add-GroupMember($groupType, $groupName, $user) {
             Add-DistributionGroupMember -Identity $groupIds[$groupName] -Member $user.ObjectId -BypassSecurityGroupManagerCheck -Confirm:$false
         }
         "Office365" {
-            Add-UnifiedGroupLinks -Identity $groupIds[$groupName] -LinkType member -Links $user.ObjectId -Confirm:$false
+            Add-TeamUser -GroupId $groupIds[$groupName] -User $user.ObjectId -Role Member
         }
         "Security" {
             Add-AzureADGroupMember -ObjectId $groupIds[$groupName] -RefObjectId $user.ObjectId
@@ -216,10 +214,7 @@ function Remove-GroupMember($groupType, $groupName, $user) {
             Remove-DistributionGroupMember -Identity $groupIds[$groupName] -Member $user.ObjectId -BypassSecurityGroupManagerCheck -Confirm:$false
         }
         "Office365" {
-            # if the member is also an owner we can not remove them; so we first have to drop owner status
-            # since we don't actually care if the member was an owner before we just SilentlyContinue if not
-            Remove-UnifiedGroupLinks -Identity $groupIds[$groupName] -LinkType Owners -Links $user.ObjectId -Confirm:$false -ErrorAction SilentlyContinue
-            Remove-UnifiedGroupLinks -Identity $groupIds[$groupName] -LinkType Members -Links $user.ObjectId -Confirm:$false
+            Remove-TeamUser -GroupId $groupIds[$groupName] -User $user.ObjectId 
         }
         "Security" {
             Remove-AzureADGroupMember -ObjectId $groupIds[$groupName] -MemberId $user.ObjectId

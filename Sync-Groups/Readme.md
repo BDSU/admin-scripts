@@ -12,14 +12,19 @@ ermöglicht das automatische Sicherstellen, dass in bestimmten (Teams-)Gruppen
 ausschließlich interne Accounts zugelassen sind.
 Dadurch werden unsere internen IT-Policies technisch erzwungen.
 
-## Zusätzliche Abhängigkeit
-Um dieses Skript ausführen zu können, muss erst eine weitere Abhängigkeit
-durch einen entsprechenden PowerShell-Befehl installiert werden.
+## Zusätzliche Abhängigkeiten
+Um diesee Skripte ausführen zu können, müssen erst weitere Abhängigkeiten
+durch einen entsprechende PowerShell-Befehle installiert werden.
 
 ### [Microsoft Teams Module](https://docs.microsoft.com/de-de/microsoftteams/teams-powershell-overview)
 ```pwsh
 Install-Module MicrosoftTeams
 ```
+### [Microsoft MSOnline Module](https://docs.microsoft.com/en-us/powershell/azure/active-directory/overview?view=azureadps-1.0&preserve_view=true)
+```pwsh
+Install-Module MSOnline
+```
+**Achtung**: Microsoft empfiehlt selbst, das Modul nicht mehr zu benutzen, allerdings wurde bis heute keine Alternative vorstellt, mit welchem anderen Modul die MFA aktiviert werden kann. Sobald es eine Alternative gibt, wird das Skript angepasst.
 
 ## Konfiguration
 Das Skript wird über zwei Variablen am Anfang konfiguriert:

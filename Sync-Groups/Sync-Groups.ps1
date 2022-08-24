@@ -61,15 +61,7 @@ if (!$credentials) {
 
 Connect-AzureAD -Credential $credentials | Out-Null
 Connect-MicrosoftTeams -Credential $credentials |Out-Null
-
-# remove existing Exchange Remote Sessions if any
-Get-PSSession | Where-Object {$_.ComputerName -eq "outlook.office365.com"} | Remove-PSSession
-
-$session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri "https://outlook.office365.com/powershell-liveid/" -Credential $credentials -Authentication Basic -AllowRedirection
-Import-PSSession $session
-if (!$?) {
-    throw "Failed to import Exchange Remote Session"
-}
+Connect-ExchangeOnline -Credential $credentials -ShowBanner:$false | Out-Null 
 
 <##
  # a null-safe wrapper around Compare-Object

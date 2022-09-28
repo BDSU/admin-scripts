@@ -32,5 +32,5 @@ Damit die Benutzer aus dem neuen Tenant auch weiterhin auf den BDSU-SharePoint z
 
 # BDSU-Verteiler einrichten (JE-Admin/BDSU-Admin)
 
-- Es muss sichergestellt sein, dass [alle verpflichtenden E-Mail-Verteiler für den BDSU](https://bdsuev.sharepoint.com/wiki/Seiten/BDSU-Verteiler.aspx) bei der JE eingerichtet und funktionsfähig sind
+- Es muss sichergestellt sein, dass [alle verpflichtenden E-Mail-Verteiler für den BDSU](https://bdsuev.sharepoint.com/SitePages/%C3%9Cbersichtsseiten/Leitf%C3%A4den/E-Mail-Verteiler.aspx) bei der JE eingerichtet und funktionsfähig sind
 - Wenn diese Verteiler eingerichtet sind, muss der BDSU-Admin diese als Kontakte im BDSU-Tenant hinzufügen (11_BDSU-create_distribution_contacts.ps1) und in die Verteiler mit eintragen
